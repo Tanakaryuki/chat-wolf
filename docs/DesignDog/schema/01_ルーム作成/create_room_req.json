@@ -1,0 +1,31 @@
+{
+  "event_type": "create_room",
+  "user": {
+    "id": "null",
+    "display_name": "string",
+    "icon": "string",
+    "is_wolf": "null",
+    "score": "null",
+    "word": "null",
+    "is_participant": "null",
+    "vote": {
+      "id": "null",
+      "display_name": "null"
+    }
+  },
+  "room": {
+    "room_id": "null",
+    "room_owner_id": "string",
+    "vote_ended": "null"
+  },
+  "chat_text": "null",
+  "option": {
+    "turn_num": "string(my設定を入れる[基本デフォルト])",
+    "discuss_time": "string",
+    "vote_time": "string",
+    "participants_num": "string"
+  },
+  "time_now": "null",
+  "win": "null",
+  "users": ["null"]
+}
