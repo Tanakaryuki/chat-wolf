@@ -7,7 +7,7 @@ load_dotenv()
 from ws import routers
 
 app = FastAPI()
-app.include_router(routers.router, prefix="/ws")
+app.include_router(routers.router)
 
 origins = [
     "*"
