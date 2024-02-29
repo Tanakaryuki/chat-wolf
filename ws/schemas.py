@@ -15,8 +15,8 @@ class UserItem(BaseModel):
     is_wolf: bool | None
     score: int | None
     word: str | None
-    is_participating: bool | None
-    vote: list[VoteItem] | None
+    is_participant: bool | None
+    vote: VoteItem | None
     
 class RoomItem(BaseModel):
     room_id: str | None
@@ -27,7 +27,7 @@ class OptionItem(BaseModel):
     turn_num: int | None
     discuss_time: int | None
     vote_time: int | None
-    participant_num: int | None
+    participants_num: int | None
     
 class WinEnum(str, Enum):
     wolf = "wolf"
@@ -76,4 +76,18 @@ class RedisInsertResponse(BaseModel):
 
 class RedisGetListResponse(BaseModel):
     items: list[tuple[str, str]] | None
-    
+
+class ModeTypeEnum(str, Enum):
+    wait = "wait"
+
+class status(BaseModel):
+    mode: ModeTypeEnum
+    turn_now: str | None
+
+class RoomModel(BaseModel):
+    room: RoomItem | None
+    options: OptionItem | None
+    status: status | None
+    time_now: str | None
+    win: WinEnum | None
+    users: list[UserItem|None] | None
