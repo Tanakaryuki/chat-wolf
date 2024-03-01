@@ -8,12 +8,14 @@ import ws.schemas as schema
 import ws.cruds as crud
 import ws.events as event
 from ws.redis import get_redis
+from ws.events import room_users
 
 router = APIRouter()
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket,redis: Redis = Depends(get_redis)):
     await websocket.accept()
+    global room_users
     try:
         while True:
             data = await websocket.receive_text()  # クライアントからのメッセージを非同期に受信
@@ -21,9 +23,20 @@ async def websocket_endpoint(websocket: WebSocket,redis: Redis = Depends(get_red
             event_type = json_data["event_type"]
             match event_type:
                 case schema.EventTypeEnum.create_room:
-                    await websocket.send_text("create room")
                     room_id = event._create_room(redis=redis,data=json_data)
                     id = event._create_user(redis=redis,data=json_data,room_id=room_id)
+                    event._change_room_owner_id(redis=redis,room_id=room_id,id=id)
+                    room_users[room_id] = []
+                    room_users[room_id].append(websocket)
+                    message = event._create_response(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id)
+                    await event._broadcast(room_id=room_id,message=message)
+                    # asyncio.create_task(event._game_loop(room_id,room_users[room_id]))
+                case schema.EventTypeEnum.enter_room:
+                    room_id = json_data["room"]["room_id"]
+                    id = event._create_user(redis=redis,data=json_data,room_id=room_id)
+                    room_users[room_id].append(websocket)
+                    message = event._create_response(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id)
+                    await event._broadcast(room_id=room_id,message=message)
             
     except Exception as e:
         print(f"WebSocketエラー: {e}")

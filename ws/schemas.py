@@ -3,6 +3,7 @@ from pydantic import BaseModel,Field
 
 class EventTypeEnum(str, Enum):
     create_room = "create_room"
+    enter_room = "enter_room"
 
 class VoteItem(BaseModel):
     id: str | None
