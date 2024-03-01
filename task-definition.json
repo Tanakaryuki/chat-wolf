@@ -1,25 +1,31 @@
 {
-    "family": "backend",
-    "runtimePlatform": {
-        "operatingSystemFamily": "LINUX",
-        "cpuArchitecture": "X86_64"
-    },
-    "executionRoleArn": "arn:aws:iam::381492174375:role/ecsTaskExecutionRole",
-    "networkMode": "awsvpc",
+    "taskDefinitionArn": "arn:aws:ecs:ap-northeast-1:381492174375:task-definition/backend:4",
     "containerDefinitions": [
         {
-            "name": "chat-wolf",
+            "name": "backend",
             "image": "381492174375.dkr.ecr.ap-northeast-1.amazonaws.com/chat-wolf:latest",
             "cpu": 0,
+            "memory": 512,
             "portMappings": [
                 {
-                    "containerPort": 8080,
-                    "hostPort": 8080,
+                    "containerPort": 80,
+                    "hostPort": 80,
                     "protocol": "tcp"
                 }
             ],
             "essential": true,
-            "readonlyRootFilesystem": true,
+            "environment": [
+                {
+                    "name": "PORT",
+                    "value": "6379"
+                },
+                {
+                    "name": "HOST_NAME",
+                    "value": "localhost"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -27,21 +33,58 @@
                     "awslogs-group": "/ecs/backend",
                     "awslogs-region": "ap-northeast-1",
                     "awslogs-stream-prefix": "ecs"
-                },
-                "secretOptions": [
-                ]
+                }
             },
-            "healthCheck": {
-                "command": ["CMD-SHELL", "curl -f http://localhost:80/ || exit 0"],
-                "interval": 30,
-                "timeout": 5,
-                "retries": 3,
-                "startPeriod": 60
-            }
+            "systemControls": []
         }
     ],
-    "requiresCompatibilities": ["FARGATE"],
-    "cpu": "1024",
-    "memory": "2048",
-    "pidMode": "task"
+    "family": "backend",
+    "taskRoleArn": "arn:aws:iam::381492174375:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::381492174375:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 4,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "512",
+    "memory": "1024",
+    "registeredAt": "2024-03-02T01:17:24.585Z",
+    "registeredBy": "arn:aws:iam::381492174375:user/simesaba",
+    "tags": []
 }
