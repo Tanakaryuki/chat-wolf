@@ -89,11 +89,10 @@ def _change_create_room_response(redis:Redis,json_data: dict,room_id: str) -> di
     
     return json_data
         
-def _change_enter_room_response(redis:Redis,json_data: dict,room_id: str) -> dict:
+def _change_enter_room_response(redis:Redis,json_data: dict,room_id: str,id: str) -> dict:
     value = crud.get_redis(redis=redis,key=room_id)
     value = json.loads(value)
-    print(value["users"])
-    print(type(value["users"]))
+    json_data["user"]["id"] = id
     json_data["users"] = value["users"]
     
     return json_data    
@@ -103,5 +102,5 @@ def _create_response(redis:Redis,event_type: schema.EventTypeEnum,json_data: dic
         case schema.EventTypeEnum.create_room:
             json_data = _change_create_room_response(redis=redis,json_data=json_data,room_id=room_id)
         case schema.EventTypeEnum.enter_room:
-            json_data = _change_enter_room_response(redis=redis,json_data=json_data,room_id=room_id)
+            json_data = _change_enter_room_response(redis=redis,json_data=json_data,room_id=room_id,id=id)
     return json.dumps(json_data)
