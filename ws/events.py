@@ -1,11 +1,15 @@
 from redis import Redis
 from uuid import uuid4
 import json
+import asyncio
+from fastapi import WebSocket
 
 import ws.schemas as schema
 import ws.cruds as crud
 
-def _create_user(redis: Redis,data: dict,room_id: str) -> str | None:
+room_users: dict[str, list[WebSocket]] = {}
+
+def _create_user(redis: Redis,data: dict,room_id: str) -> str:
     value = crud.get_redis(redis=redis,key=room_id)
     value = json.loads(value)
     
@@ -24,6 +28,7 @@ def _create_user(redis: Redis,data: dict,room_id: str) -> str | None:
         }
     })
     crud.post_redis(redis=redis,key=room_id,value=json.dumps(value))
+    return id
     
 def _create_room(redis: Redis,data: dict) -> str | None:
     json_data = _get_room_model()
@@ -37,6 +42,13 @@ def _create_room(redis: Redis,data: dict) -> str | None:
     value = json.dumps(json_data)
     crud.post_redis(redis=redis,key=room_id,value=value)
     return room_id
+
+def _change_room_owner_id(redis: Redis,room_id: str,id: str) -> None:
+    value = crud.get_redis(redis=redis,key=room_id)
+    value = json.loads(value)
+    value["room"]["room_owner_id"] = id
+    crud.post_redis(redis=redis,key=room_id,value=json.dumps(value))
+    return None
 
 def _get_room_model() -> dict:
     json ={
@@ -60,3 +72,36 @@ def _get_room_model() -> dict:
         "users": []
     }
     return json
+
+async def _broadcast(room_id: str,message: str) -> None:
+    global room_users
+    for user in room_users[room_id]:
+        await user.send_text(message)
+        
+def _change_create_room_response(redis:Redis,json_data: dict,room_id: str) -> dict:
+    value = crud.get_redis(redis=redis,key=room_id)
+    value = json.loads(value)
+    json_data["user"]["id"] = value["users"][0]["id"]
+    json_data["room"] = {
+        "room_id": room_id,
+        "room_owner_id": value["users"][0]["id"]
+    }
+    
+    return json_data
+        
+def _change_enter_room_response(redis:Redis,json_data: dict,room_id: str) -> dict:
+    value = crud.get_redis(redis=redis,key=room_id)
+    value = json.loads(value)
+    print(value["users"])
+    print(type(value["users"]))
+    json_data["users"] = value["users"]
+    
+    return json_data    
+
+def _create_response(redis:Redis,event_type: schema.EventTypeEnum,json_data: dict,room_id: str,id: str) -> str:
+    match event_type:
+        case schema.EventTypeEnum.create_room:
+            json_data = _change_create_room_response(redis=redis,json_data=json_data,room_id=room_id)
+        case schema.EventTypeEnum.enter_room:
+            json_data = _change_enter_room_response(redis=redis,json_data=json_data,room_id=room_id)
+    return json.dumps(json_data)
