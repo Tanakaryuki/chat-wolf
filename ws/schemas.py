@@ -4,6 +4,7 @@ from pydantic import BaseModel,Field
 class EventTypeEnum(str, Enum):
     create_room = "create_room"
     enter_room = "enter_room"
+    start_game = "start_game"
 
 class VoteItem(BaseModel):
     id: str | None
@@ -80,6 +81,8 @@ class RedisGetListResponse(BaseModel):
 
 class ModeTypeEnum(str, Enum):
     wait = "wait"
+    question = "question"
+    voting = "voting"
 
 class status(BaseModel):
     mode: ModeTypeEnum

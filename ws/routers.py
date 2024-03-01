@@ -28,15 +28,21 @@ async def websocket_endpoint(websocket: WebSocket,redis: Redis = Depends(get_red
                     event._change_room_owner_id(redis=redis,room_id=room_id,id=id)
                     room_users[room_id] = []
                     room_users[room_id].append(websocket)
-                    message = event._create_response(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id)
-                    await event._broadcast(room_id=room_id,message=message)
-                    # asyncio.create_task(event._game_loop(room_id,room_users[room_id]))
+                    message = event._create_response(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id,num=None)
+                    await websocket.send_text(message)
                 case schema.EventTypeEnum.enter_room:
                     room_id = json_data["room"]["room_id"]
                     id = event._create_user(redis=redis,data=json_data,room_id=room_id)
                     room_users[room_id].append(websocket)
-                    message = event._create_response(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id)
+                    message = event._create_broadcast(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id)
                     await event._broadcast(room_id=room_id,message=message)
+                case schema.EventTypeEnum.start_game:
+                    room_id = json_data["room"]["room_id"]
+                    event._change_room_mode(redis=redis,room_id=room_id,mode=schema.ModeTypeEnum.question,json_data=json_data)
+                    message = event._create_broadcast(redis=redis,event_type=event_type,json_data=json_data,room_id=json_data["room"]["room_id"],id=json_data["user"]["id"])
+                    await event._broadcast(room_id=room_id,message=message)
+                    await event._give_word(redis=redis,room_id=room_id,json_data=json_data)
+                    # asyncio.create_task(event._game_loop(room_id))
             
     except Exception as e:
         print(f"WebSocketエラー: {e}")
