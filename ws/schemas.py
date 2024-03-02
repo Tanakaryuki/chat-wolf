@@ -4,7 +4,10 @@ from pydantic import BaseModel,Field
 class EventTypeEnum(str, Enum):
     create_room = "create_room"
     enter_room = "enter_room"
+    give_id = "give_id"
     start_game = "start_game"
+    ask_question = "ask_question"
+    give_answer = "give_answer"
 
 class VoteItem(BaseModel):
     id: str | None

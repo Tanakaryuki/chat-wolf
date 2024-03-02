@@ -8,7 +8,7 @@ import ws.schemas as schema
 import ws.cruds as crud
 import ws.events as event
 from ws.redis import get_redis
-from ws.events import room_users
+from ws.events import room_users,game_loops
 
 router = APIRouter()
 
@@ -34,6 +34,11 @@ async def websocket_endpoint(websocket: WebSocket,redis: Redis = Depends(get_red
                     room_id = json_data["room"]["room_id"]
                     id = event._create_user(redis=redis,data=json_data,room_id=room_id)
                     room_users[room_id].append(websocket)
+                    message = event._create_response(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id,num=None)
+                    message = json.loads(message)
+                    message["event_type"] = schema.EventTypeEnum.give_id
+                    message = json.dumps(message)
+                    await websocket.send_text(message)
                     message = event._create_broadcast(redis=redis,event_type=event_type,json_data=json_data,room_id=room_id,id=id)
                     await event._broadcast(room_id=room_id,message=message)
                 case schema.EventTypeEnum.start_game:
@@ -42,7 +47,19 @@ async def websocket_endpoint(websocket: WebSocket,redis: Redis = Depends(get_red
                     message = event._create_broadcast(redis=redis,event_type=event_type,json_data=json_data,room_id=json_data["room"]["room_id"],id=json_data["user"]["id"])
                     await event._broadcast(room_id=room_id,message=message)
                     await event._give_word(redis=redis,room_id=room_id,json_data=json_data)
-                    # asyncio.create_task(event._game_loop(room_id))
+                    
+                    global game_loops
+                    game_loops[room_id] = asyncio.create_task(event._game_loop(redis=redis,room_id=room_id,json_data=json_data))
+                case schema.EventTypeEnum.ask_question:
+                    question = json_data["chat_text"]
+                    json_data["event_type"] = schema.EventTypeEnum.ask_question
+                    await event._broadcast(room_id=room_id,message=json.dumps(json_data))
+                    word = event._get_word(redis=redis,room_id=room_id)
+                    response = event._ask_question(question=question,word=word)
+                    json_data["event_type"] = schema.EventTypeEnum.give_answer
+                    json_data["chat_text"] = response
+                    await event._broadcast(room_id=room_id,message=json.dumps(json_data))
+                    
             
     except Exception as e:
         print(f"WebSocketエラー: {e}")
